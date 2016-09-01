@@ -1,0 +1,21 @@
+{
+  "name": "Sound Bound",
+  "homepage": "https://github.com/v1nyl-scratch/sound-bound",
+  "authors": [
+    "Tyler Reisinger <reisinger.tyler@gmail.com>"
+  ],
+  "description": "",
+  "main": "src/index.html",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "angularjs#^1.5.8"
+  }
+}
