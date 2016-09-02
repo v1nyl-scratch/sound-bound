@@ -1,13 +1,18 @@
 <!DOCTYPE html>
-<html ng-app="SoundBound">
+<html ng-app="sound_bound">
 <head>
     <title>Sound Bound</title>
-    <script src="bower_components/angular/angular.min.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="src/playlist/playlist.module.js"></script>
+    <script src="src/playlist/playlist.controller.js"></script>
     <script src="src/app.module.js"></script>
     <meta http-equiv="cache-control" content="no-cache" />
 </head>
 <body>
     <h2>Hello, World!</h2>
     <img src="http://vignette1.wikia.nocookie.net/mlpfanart/images/b/b9/Vinyl_Scratch_by_MoongazePonies.png/revision/latest?cb=20120831034918"></img>
+    <div id="content">
+        <div id="playlist" ng-controller="PlaylistController as vm"></div>
+    </div>
 </body>
 </html>

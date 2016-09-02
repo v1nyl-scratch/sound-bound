@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    angular.module('SoundBound', []);
-
-
+    angular.module('sound_bound', [
+        'sound_bound.playlist'
+    ]);
 })();
