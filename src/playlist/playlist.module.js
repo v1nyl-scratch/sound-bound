@@ -1,4 +1,6 @@
 (function () {
     angular
-        .module('sound_bound.playlist', []);
+        .module('sound_bound.playlist', [
+            'sound_bound.mopidy'
+        ]);
 })();
