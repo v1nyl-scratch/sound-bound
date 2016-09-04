@@ -21,6 +21,7 @@
                     console.log("Sending " + msg.toString() + "...");
                     ws.send(msg[1]);
                 }
+                send_queue = [];
             };
 
             ws.onerror = function (err) {
