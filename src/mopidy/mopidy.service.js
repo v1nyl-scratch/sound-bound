@@ -8,7 +8,7 @@
         .factory('mopidyService', mopidyService)
 
     function mopidyService($q) {
-        return function () {
+        return new function () {
             var ws = new WebSocket('ws://localhost:6680/mopidy/ws');
             var that = this;
             var next_id = 1;
