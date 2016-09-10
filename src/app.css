@@ -1,6 +1,51 @@
-.tracklist {
+body {
+    margin: 0px;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+}
+
+.header {
+    background-color: lightblue;
+    margin: 0px;
+    padding: 0px;
+    height: 60px;
+    width: 100%;
+    border-color: #DDDDDD;
+    flex: 0 1 auto;
+}
+
+.content {
+    display: flex;
+    flex: 1 100%;
+}
+
+footer {
+    flex: 0 1 auto;
+    background-color: lightblue;
+}
+
+.nav-panel {
+    flex: 0 1 auto;
+    width: 200px;
+    border-right: 1px solid;
     overflow: auto;
-    height: 600px;
+}
+
+.center-panel {
+    flex: 1 1 auto;
+    background-color: #EEEEF9;
+}
+
+.tracklist {
+    flex: 0 1 auto;
+    overflow: auto;
+    border-left: 1px solid;
 }
 
 .tracklist-table>tbody>tr>td {
@@ -20,4 +65,10 @@
 
 .tracklist-table>tbody>tr:nth-child(even) {
     background-color: #DDDDDD;
+}
+
+
+.header-text {
+    vertical-align: middle;
+    margin-top: 0px;
 }

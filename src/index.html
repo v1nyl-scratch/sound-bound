@@ -11,9 +11,18 @@
     <meta http-equiv="cache-control" content="no-cache" />
 </head>
 <body>
-    <h2>Hello, World!</h2>
-    <img src="http://vignette1.wikia.nocookie.net/mlpfanart/images/b/b9/Vinyl_Scratch_by_MoongazePonies.png/revision/latest?cb=20120831034918"></img>
-    <div id="content">
+    <div class="page">
+    <header class="header">
+        <h3 class="header-text">Sound Bound</h3>
+    </header>
+
+    <div class="content">
+        <div class="nav-panel">
+        </div>
+        <div class="center-panel">
+            <div style="height=100%">
+            </div>
+        </div>
         <div id="playlist" ng-controller="PlaylistController as vm">
             <div class="tracklist">
                 <table class="tracklist-table">
@@ -25,6 +34,11 @@
                 </table>
             </div>
         </div>
+    </div>
+
+    <footer>
+        <p>I'm the footer</p>
+    </footer>
     </div>
 </body>
 </html>
