@@ -2,3 +2,22 @@
     overflow: auto;
     height: 600px;
 }
+
+.tracklist-table>tbody>tr>td {
+    border: 1px;
+    border-color: #DDDDDD;
+    padding: 2px;
+}
+
+.tracklist-table>tbody>tr {
+    border-color: #CCCCCC;
+    border-width: 1px;
+}
+
+.tracklist-table>tbody>tr:nth-child(odd) {
+    background-color: #EEEEEE;
+}
+
+.tracklist-table>tbody>tr:nth-child(even) {
+    background-color: #DDDDDD;
+}

@@ -16,10 +16,12 @@
     <div id="content">
         <div id="playlist" ng-controller="PlaylistController as vm">
             <div class="tracklist">
-                <table class="tracklist">
-                    <tr ng-repeat="track in vm.tracks">
-                        <td>{{track.name}}</td>
-                    </tr>
+                <table class="tracklist-table">
+                    <tbody>
+                        <tr ng-repeat="track in vm.tracks">
+                            <td>{{track.name}}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
