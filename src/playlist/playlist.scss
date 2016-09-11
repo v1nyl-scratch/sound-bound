@@ -3,24 +3,33 @@
     overflow: auto;
     border-left: 1px solid;
     height: 100%;
+    max-width: 300px;
 
-    .tracklist-table>tbody>tr>td {
-        border: 1px;
-        border-color: #DDDDDD;
-        padding: 2px;
-    }
+    .tracklist-table {
+        border-spacing: 0px;
 
-    .tracklist-table>tbody>tr {
-        border-color: #CCCCCC;
-        border-width: 1px;
-    }
+        >tbody {
+            >tr {
+                margin: 0px;
 
-    .tracklist-table>tbody>tr:nth-child(odd) {
-        background-color: #EEEEEE;
-    }
+                >td {
+                    padding: 2px;
+                    margin: 0px;
+                    border-bottom: 1px solid;
+                    border-color: #AAAAAA;
+                }
+            }
+            >tr:nth-child(odd) {
+                background-color: #EEEEEE;
+            }
+            >tr:nth-child(even) {
+                background-color: #DDDDDD;
+            }
+            >tr:hover {
+                background-color: #CCCCDF;
+            }
 
-    .tracklist-table>tbody>tr:nth-child(even) {
-        background-color: #DDDDDD;
+        }
     }
 }
 
