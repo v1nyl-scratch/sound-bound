@@ -3,20 +3,12 @@
 
     angular
         .module('sound_bound.playback')
-        .directive('sbPlaybackWidget', sbPlaybackWidget);
-
-    function sbPlaybackWidget() {
-        var directive = {
-            restrict: 'E',
-            replace: true,
-            scope: {},
+        .component('sbPlaybackWidget', {
+            bindings: {},
             controller: SbPlaybackWidgetController,
             controllerAs: 'pbvm',
-            bindToController: true,
             templateUrl: 'src/playback/playbackWidget.html'
-        };
-        return directive;
-    }
+        });
 
     function SbPlaybackWidgetController(mopidyService) {
         'ngInject';
