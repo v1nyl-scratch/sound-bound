@@ -20,6 +20,10 @@ body {
     flex: 0 1 auto;
 }
 
+.header-content {
+    vertical-align: middle;
+}
+
 .content {
     display: flex;
     flex: 1 100%;
@@ -65,10 +69,4 @@ footer {
 
 .tracklist-table>tbody>tr:nth-child(even) {
     background-color: #DDDDDD;
-}
-
-
-.header-text {
-    vertical-align: middle;
-    margin-top: 0px;
 }
