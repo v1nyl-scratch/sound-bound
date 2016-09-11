@@ -11,7 +11,6 @@
         vm.tracks = [];
 
         var q = mopidyService.rpc("core.tracklist.slice", [0, 100]).then(function (msg) {
-            console.log('Yay');
             console.log(msg);
             for(var tl of msg.result) {
                 vm.tracks.push(tl.track);

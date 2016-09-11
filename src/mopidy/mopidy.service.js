@@ -62,6 +62,7 @@
 
             function rpc(method, params) {
                 var id = next_id;
+                params = params || [];
                 next_id += 1;
                 var query = {
                     "jsonrpc": "2.0",
@@ -73,11 +74,9 @@
 
                 var deferred = $q.defer();
                 promise_store[id] = deferred;
-                console.log(ws.readyState);
 
                 if(ws.readyState == ws.CONNECTING) {
                     send_queue.push([id, payload, deferred]);
-                    console.log('Queueing send ' + id + ' until open.');
                 } else if(ws.readyState == ws.OPEN) {
                     ws.send(payload);
                 } else {
