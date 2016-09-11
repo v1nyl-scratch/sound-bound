@@ -1,7 +1,7 @@
 {
   "name": "sound-bound",
   "version": "0.0.1",
-  "description": "",
+  "description": "A mopidy web client",
   "main": "src/index.html",
   "repository": {
     "type": "git",
@@ -15,6 +15,9 @@
   "homepage": "https://github.com/v1nyl-scratch/sound-bound#readme",
   "devDependencies": {
     "gulp": "^3.9.1",
+    "gulp-inject": "^4.1.0",
+    "gulp-sass": "^2.3.2",
+    "gulp-shell": "^0.5.2",
     "gulp-util": "^3.0.7"
   }
 }
