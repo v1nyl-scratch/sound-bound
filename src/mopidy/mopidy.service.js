@@ -12,8 +12,11 @@
             var ws = new WebSocket('ws://localhost:6680/mopidy/ws');
             var that = this;
             var next_id = 1;
+            var next_evt_id = 1;
+            var eventHandlers = {};
 
             that.rpc = rpc;
+            that.on = on;
 
             ws.onopen = function () {
                 console.log("Web socket opened.");
@@ -35,13 +38,23 @@
             ws.onmessage = function (msg) {
                 var payload = JSON.parse(msg.data);
                 var id = payload.id;
-                var promise = promise_store[id];
-                if(payload.error) {
-                    promise.reject(payload.error, payload);
+                if(id != null) {
+                    var promise = promise_store[id];
+                    if(payload.error) {
+                        promise.reject(payload.error, payload);
+                    } else {
+                        promise.resolve(payload);
+                    }
+                    delete promise_store[id];
                 } else {
-                    promise.resolve(payload);
+                    var eventType = payload['event'];
+                    if(eventHandlers[eventType] != null) {
+                        for(var idx in eventHandlers[eventType]) {
+                            eventHandlers[eventType][idx](payload);
+                        }
+                    }
+                    console.log('Event: ' + eventType);
                 }
-                delete promise_store[id];
             };
 
             var promise_store = {};
@@ -73,6 +86,23 @@
                 }
 
                 return deferred.promise;
+            }
+
+            function on(evt, handler) {
+                var id = next_evt_id;
+                next_evt_id += 1;
+
+                if(eventHandlers[evt] == null) {
+                    eventHandlers[evt] = {};
+                }
+                eventHandlers[evt][id] = handler;
+
+                return new function () {
+                    this.close = function () {
+                        var handler = eventHandlers[evt];
+                        delete handler[id];              
+                    };
+                };
             }
         };
     }
