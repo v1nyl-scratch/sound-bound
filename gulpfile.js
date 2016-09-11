@@ -52,7 +52,7 @@ gulp.task('browser-sync', function () {
     });
 });
 
-gulp.task('serve', function () {
+gulp.task('serve', ['deploy'], function () {
     gulp.watch(['./src/**/*.js', './src/**/*.html', './src/**/*.scss'], ['deploy']);
     gulp.watch('./src/**/*.html').on('change', browserSync.reload);
 });
