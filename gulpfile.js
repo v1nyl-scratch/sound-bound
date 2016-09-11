@@ -4,9 +4,13 @@ var gutil = require('gulp-util');
 var sass = require('gulp-sass');
 var shell = require('gulp-shell');
 var inject = require('gulp-inject');
+var browserSync = require('browser-sync').create();
 
 gulp.task('scss', function () {
-    return gulp.src('./src/app.scss').pipe(sass()).pipe(gulp.dest('./build/src/'));
+    return gulp.src('./src/app.scss')
+        .pipe(sass())
+        .pipe(gulp.dest('./build/src/'))
+        .pipe(browserSync.stream());
 });
 
 gulp.task('inject', function () {
@@ -31,7 +35,27 @@ gulp.task('package-bower', function () {
 });
 
 gulp.task('package', ['scss', 'inject', 'package-bower', 'package-metadata'], function () {
-    return gulp.src(['./src/**/*.html', './src/**/*.js', '!./src/index.html']).pipe(gulp.dest('./build/src/'));
+    return gulp.src(['./src/**/*.html', './src/**/*.js', '!./src/index.html'])
+        .pipe(gulp.dest('./build/src/'))
+        .pipe(browserSync.stream());
 });
 
 gulp.task('deploy', ['package'], shell.task(['echo "Deploying"', 'deploy-dev ./build']));
+
+gulp.task('browser-sync', function () {
+    browserSync.init({
+        proxy: {
+            target: "dev.theelectriccastle.com",
+            ws: true
+
+        }
+    });
+});
+
+gulp.task('serve', function () {
+    gulp.watch(['./src/**/*.js', './src/**/*.html', './src/**/*.scss'], ['deploy']);
+    gulp.watch('./src/**/*.html').on('change', browserSync.reload);
+});
+
+gulp.task('sync', ['browser-sync', 'serve'], function () {
+});

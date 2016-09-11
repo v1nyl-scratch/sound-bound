@@ -14,6 +14,7 @@
   },
   "homepage": "https://github.com/v1nyl-scratch/sound-bound#readme",
   "devDependencies": {
+    "browser-sync": "^2.15.0",
     "gulp": "^3.9.1",
     "gulp-inject": "^4.1.0",
     "gulp-sass": "^2.3.2",
