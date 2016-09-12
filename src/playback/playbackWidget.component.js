@@ -14,24 +14,24 @@
         'ngInject';
 
         var pbvm = this;
+        var evtHandlers = [];
 
-        pbvm.currentTrack = null;
+        pbvm.currentTrack = {};
 
         init();
 
         function init() {
-            var evtHandlers = [];
 
-            var handler = mopidyService.on('playback_state_changed', function () {
-                
+            var handler = mopidyService.on('playback_state_changed', function (evt) {
             });
             evtHandlers.push(handler);
 
-            var handler = mopidyService.on('track_playback_started', function () {
+            var handler = mopidyService.on('track_playback_started', function (evt) {
+                pbvm.currentTrack = evt.tl_track;
             });
             evtHandlers.push(handler);
 
-            var handler = mopidyService.on('track_playback_ended', function () {
+            var handler = mopidyService.on('track_playback_ended', function (evt) {
             });
             evtHandlers.push(handler);
 
