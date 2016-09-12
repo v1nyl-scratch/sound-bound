@@ -7,7 +7,7 @@
         ])
         .factory('mopidyService', mopidyService)
 
-    function mopidyService($q) {
+    function mopidyService($q, $rootScope) {
         return new function () {
             var ws = new WebSocket('ws://localhost:6680/mopidy/ws');
             var that = this;
@@ -49,11 +49,14 @@
                 } else {
                     var eventType = payload['event'];
                     if(eventHandlers[eventType] != null) {
-                        for(var idx in eventHandlers[eventType]) {
-                            eventHandlers[eventType][idx](payload);
-                        }
+                        $rootScope.$apply(function () {
+                            for(var idx in eventHandlers[eventType]) {
+                                    eventHandlers[eventType][idx](payload)
+                            }
+                        });
                     }
                     console.log('Event: ' + eventType);
+                    console.log(payload);
                 }
             };
 
