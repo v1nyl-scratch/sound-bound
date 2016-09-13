@@ -1,0 +1,11 @@
+<div class="volume-widget">
+    <span class="vol-title">Volume: </span> 
+    
+    <div class="slider-container">
+        <input type="range" min="0" max="100" ng-model="vwvm.currentVolume" 
+            ng-change="vwvm.onVolumeChange();"></input>
+    </div>
+
+    <span class="vol">{{vwvm.currentVolume}}</span>
+
+</div>

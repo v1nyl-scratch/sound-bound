@@ -1,14 +1,19 @@
 <div class="playback-widget">
     <div class="track-info">
-        <h3>
-            <span class="artist">{{pbvm.currentTrack.track.artists[0].name}}</span> --
-            <span class="track">{{pbvm.currentTrack.track.name}}</span>
-        </h3>
-        <div class="album-info">
-            <span class="track-num">Track {{pbvm.currentTrack.track.track_no}}</span>
-            --
-            <span class="album">{{pbvm.currentTrack.track.album.name}}</span>
-            <span class="year">{{pbvm.currentTrack.track.album.date}}</span>
+        <div class="playing-info">
+            <h3>
+                <span class="artist">{{pbvm.currentTrack.track.artists[0].name}}</span> --
+                <span class="track">{{pbvm.currentTrack.track.name}}</span>
+            </h3>
+            <div class="album-info">
+                <span class="track-num">Track {{pbvm.currentTrack.track.track_no}}</span>
+                --
+                <span class="album">{{pbvm.currentTrack.track.album.name}}</span>
+                <span class="year">{{pbvm.currentTrack.track.album.date}}</span>
+            </div>
+        </div>
+        <div class="volume-widget-container">
+            <sb-volume-widget></sb-volume-widget>
         </div>
     </div>
 </div>

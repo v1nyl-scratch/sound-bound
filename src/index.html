@@ -16,31 +16,31 @@
 </head>
 <body>
     <div class="page">
-    <header class="header">
-        <div class="header-content">
-            <h3 class="header-text">Sound Bound</h3>
-        </div>
-    </header>
+        <header class="header">
+            <div class="header-content">
+                <h3 class="header-text">Sound Bound</h3>
+            </div>
+        </header>
 
-    <div class="content">
-        <div class="nav-panel">
-        </div>
-        <div class="center-panel">
-        </div>
-        <div id="playlist" ng-controller="PlaylistController as vm">
-            <div class="tracklist">
-                <table class="tracklist-table">
-                    <tbody>
-                        <tr ng-repeat="track in vm.tracks">
-                            <td>{{::track.name}}</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="content">
+            <div class="nav-panel">
+            </div>
+            <div class="center-panel">
+            </div>
+            <div id="playlist" ng-controller="PlaylistController as vm">
+                <div class="tracklist">
+                    <table class="tracklist-table">
+                        <tbody>
+                            <tr ng-repeat="track in vm.tracks">
+                                <td>{{::track.name}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
 
-    <sb-playback-widget></sb-playback-widget>
+        <sb-playback-widget></sb-playback-widget>
 
     </div>
 </body>
