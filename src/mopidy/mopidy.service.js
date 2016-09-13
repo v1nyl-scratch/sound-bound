@@ -9,7 +9,7 @@
 
     function mopidyService($q, $rootScope) {
         return new function () {
-            var ws = new WebSocket('ws://localhost:6680/mopidy/ws');
+            var ws = new WebSocket('ws://dev.theelectriccastle.com:6680/mopidy/ws');
             var that = this;
             var next_id = 1;
             var next_evt_id = 1;
