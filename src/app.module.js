@@ -6,6 +6,7 @@
         'sound_bound.playback',
         'sound_bound.mopidy',
         'sound_bound.modal',
+        'sound_bound.tracklist',
 
         'angularModalService'
     ]);

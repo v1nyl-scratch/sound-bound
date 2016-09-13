@@ -2,10 +2,16 @@
     'use strict';
 
     angular
-        .module('sound_bound.playlist')
-        .controller('PlaylistController', PlaylistController);
+        .module('sound_bound.tracklist')
+        .component('sbTracklistWidget', {
+            bindings: {},
+            controller: TracklistWidgetController,
+            controllerAs: 'vm',
+            templateUrl: 'src/tracklist/tracklistWidget.html'
+        });
 
-    function PlaylistController(mopidyService) {
+    function TracklistWidgetController(mopidyService) {
+        'ngInject';
         var vm = this;
 
         vm.tracks = [];
