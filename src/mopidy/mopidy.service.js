@@ -7,7 +7,7 @@
         ])
         .factory('mopidyService', mopidyService)
 
-    function mopidyService($q, $rootScope) {
+    function mopidyService($q, $rootScope, errorModalService) {
         return new function () {
             var ws = new WebSocket('ws://dev.theelectriccastle.com:6680/mopidy/ws');
             var that = this;
@@ -29,6 +29,9 @@
 
             ws.onerror = function (err) {
                 console.log("Web socket broke.");
+                console.log(err);
+                errorModalService.showError('Unable to connect to mopidy at "'
+                        + err.currentTarget.url + '".');
                 for(var promise in promise_store) {
                     promise_store[id].reject(err);
                 }

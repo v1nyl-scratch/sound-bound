@@ -1,0 +1,13 @@
+<div class="modal-container" ng-class="{'modal-container-closing': vm.isClosing}">
+    <div class="modal-dialog error-dialog">
+        <header class="modal-header error-header">
+            <h2 class="header-text">Error</h2>
+        </header>
+        <section class="modal-body">
+            <h4>{{::vm.errorMsg}}</h4>
+            <div class="btn-bar">
+                <button ng-click="vm.close();">Close</button>
+            </div>
+        </section>
+    </div>
+</div>

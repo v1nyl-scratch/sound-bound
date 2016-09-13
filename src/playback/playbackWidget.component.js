@@ -10,7 +10,7 @@
             templateUrl: 'src/playback/playbackWidget.html'
         });
 
-    function SbPlaybackWidgetController(mopidyService) {
+    function SbPlaybackWidgetController(errorModalService, mopidyService) {
         'ngInject';
 
         var pbvm = this;
@@ -21,7 +21,6 @@
         init();
 
         function init() {
-
             var handler = mopidyService.on('playback_state_changed', function (evt) {
             });
             evtHandlers.push(handler);
@@ -40,7 +39,7 @@
                     console.log(msg);
                     pbvm.currentTrack = msg.result; 
                 }).catch(function (err) {
-                    console.log(err);
+                    errorModalService.showError('Error getting current track: ' + err);
                 });
         };
     }

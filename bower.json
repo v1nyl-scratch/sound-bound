@@ -16,6 +16,7 @@
     "tests"
   ],
   "dependencies": {
-    "angular": "angularjs#^1.5.8"
+    "angular": "angularjs#^1.5.8",
+    "angular-modal-service": "^0.10.1"
   }
 }
