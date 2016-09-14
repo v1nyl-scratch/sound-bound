@@ -15,11 +15,7 @@
         init();
 
         function init() {
-            watchForConnection();
-        }
-
-        function watchForConnection() {
-            mopidyService.onConnect().then(onConnect);
+            mopidyService.onConnect(onConnect, reaper);
         }
 
         function onConnect() {

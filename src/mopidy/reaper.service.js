@@ -23,31 +23,39 @@
         obj.track = track;
         obj.untrack = untrack;
         obj.objectCount = objectCount;
+        obj.reap = reap;
 
         var gallows = new Set();
 
         init();
 
         function init() {
-            scope.$on('$destroy', function() {
-                for(var obj of gallows) {
-                    if(obj.unregister) {
-                        //Event objects from mopidyService have a .unregister().
-                        obj.unregister();
-                    } else if(obj.abort) {
-                        //Promise objects from mopidyService have a .abort().
-                        obj.abort();
-                    } else {
-                        $log.warn('Reaper tracking an object that was not able to be reaped.');
-                        $log.warn(obj);
-                    }
-                }
-                $log.debug('Reaped ' + gallows.length + ' handlers.');
-                gallows = [];
-            });
+            scope.$on('$destroy', reap);
 
             //We don't need to keep a reference to scope
             scope = null;
+        }
+
+        //Manually trigger a reap. You probably don't need to call this.
+        function reap() {
+            for(var obj of gallows) {
+                //_reap() should be checked first as it is exposed for the reaper
+                //in case reaping should behave differently than unregister or abort.
+                if(obj._reap) {
+                    obj._reap();
+                } else if(obj.unregister) {
+                    //Event objects from mopidyService have a .unregister().
+                    obj.unregister();
+                } else if(obj.abort) {
+                    //Promise objects from mopidyService have a .abort().
+                    obj.abort();
+                } else {
+                    $log.warn('Reaper tracking an object that was not able to be reaped.');
+                    $log.warn(obj);
+                }
+            }
+            $log.debug('Reaped ' + gallows.size + ' handlers.');
+            gallows.clear();
         }
 
         function track(obj) {

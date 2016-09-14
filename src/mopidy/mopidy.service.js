@@ -12,8 +12,8 @@
             var nextId = 1;
             var nextEvtId = 1;
             var eventHandlers = new Map();
-            var onConnectPromises = new Map();
-            var onDisconnectPromises = new Map();
+            var onConnectHandlers = new Map();
+            var onDisconnectHandlers = new Map();
             var rpcPromises = new Map();
 
             service.rpc = rpc;
@@ -24,11 +24,11 @@
             ws.onopen = function() {
                 $log.info("Web socket opened to '" + ws.url + "'.");
                     
-                for(var promise of onConnectPromises) {
-                    promise[1].resolve(ws);
+                for(var handler of onConnectHandlers) {
+                    handler[1](ws);
                 }
 
-                onConnectPromises.clear();
+                onConnectHandlers.clear();
             };
 
             ws.onclose = function(close) {
@@ -42,11 +42,11 @@
                     }
                 }
 
-                for(var promise of onDisconnectPromises) {
-                    promise[1].resolve();
+                for(var handler of onDisconnectHandlers) {
+                    handler[1]();
                 }
 
-                onDisconnectPromises.clear();
+                onDisconnectHandlers.clear();
                 rpcPromises.clear();
             };
 
@@ -123,14 +123,22 @@
                 var deferred = $q.defer();
                 rpcPromises.set(id, deferred);
 
-                deferred.promise.abort = function() {
-                    rpcPromises.delete(id);
-                };
 
                 if(reaper) {
                     deferred.reaper = reaper;
                     reaper.track(deferred.promise);
                 }
+
+                deferred.promise._reap = function() {
+                    rpcPromises.delete(id);
+                };
+
+                deferred.promise.abort = function() {
+                    if(deferred.reaper) {
+                        deferred.reaper.untrack(deferred.promise);
+                    }
+                    rpcPromises.delete(id);
+                };
 
                 if(ws.readyState == ws.CONNECTING) {
                     //send_queue.push([id, payload, deferred]);
@@ -154,58 +162,59 @@
                 var thisEventHandlers = eventHandlers.get(evt);
                 thisEventHandlers.set(id, handler);
 
-                var eventObj = {
-                    id: id,
-                    unregister: function() {
-                        thisEventHandlers.delete(id);
-                    }
-                }
+                var eventHandle = new EventHandle(id, reaper, function() {
+                    thisEventHandlers.delete(id);
+                });
 
                 if(reaper) {
-                    reaper.track(eventObj);
+                    reaper.track(eventHandle);
                 } else {
-                    $log.warn("'on' called without a reaper. This can cause an event "
-                        + "to stay registered after a controller is destroyed.");
+                    logReaperWarning('on');
                 }
-
+                
+                return eventHandle;
             }
 
-            function onConnect() {
-                var deferred = $q.defer();
-                deferred.promise.abort = angular.noop;
-
+            function onConnect(handler, reaper) {
                 if(ws.readyState == ws.OPEN) {
-                    deferred.resolve(ws); 
-                } else if(ws.readyState == ws.CLOSED) {
-                    deferred.reject();
-                } else {
-                    var id = nextEventId();
-                    deferred.promise.abort = function() {
-                        onConnectPromise.delete(id);
-                    }
+                    handler();
+                } 
 
-                    onConnectPromises.set(id, deferred);
+                var id = nextEventId();
+                onConnectHandlers.set(id, handler);
+
+                var eventHandle = new EventHandle(id, reaper, function() {
+                    onConnectHandlers.delete(id);
+                });
+
+                if(reaper) {
+                    reaper.track(eventHandle);
+                } else {
+                    logReaperWarning('onConnect');
                 }
 
-                return deferred.promise;
+                return eventHandle;
             }
 
-            function onDisconnect() {
-                var deferred = $q.defer();
-                deferred.promise.abort = angular.noop;
-
+            function onDisconnect(handler, reaper) {
                 if(ws.readyState == ws.CLOSED) {
-                    deferred.resolve();
-                } else {
-                    var id = nextEventId();
-                    deferred.promise.abort = function() {
-                        onDisconnectPromise.delete(id);
-                    }
-
-                    onDisconnectPromise.set(id, deferred);
+                    handler();
                 }
 
-                return deferred.promise;
+                var id = nextEventId();
+                onDisconnectHandlers.set(id, handler);
+
+                var eventHandle = new EventHandle(id, reaper, function() {
+                    onDisconnectHandlers.delete(id);
+                });
+
+                if(reaper) {
+                    reaper.track(eventHandle);
+                } else {
+                    logReaperWarning('onDisconnect');
+                }
+
+                return eventHandle;
             }
 
             function nextEventId() {
@@ -213,7 +222,34 @@
                 nextEvtId += 1;
                 return id;
             }
+
+            function logReaperWarning(funcName) {
+                $log.warn("'" + funcName + "' called without a reaper. This can cause an event "
+                    + "to stay registered after a controller is destroyed.");
+            }
+
         };
+    }
+
+    function EventHandle(id, reaper, unregister) {
+        var obj = this;
+
+        obj.id = id;
+        obj.reaper = reaper;
+        obj.unregister = unregister;
+
+        //The reaper should not untrack this during reaping as it would break iteration
+        //and waste time.
+        obj._reap = unregister;
+
+        //If we are tracked by a reaper, we need a manual call to unregister to
+        //untrack this from the reaper.
+        if(obj.reaper) {
+            obj.unregister = function() {
+                reaper.untrack(obj);
+                unregister();
+            }
+        }
     }
 
     function RpcError(type, error) {

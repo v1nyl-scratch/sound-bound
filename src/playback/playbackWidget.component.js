@@ -22,7 +22,7 @@
         init();
 
         function init() {
-            watchForConnection(); 
+            mopidyService.onConnect(onConnect, reaper);
 
             mopidyService.on('playback_state_changed', function (evt) {
             }, reaper);
@@ -34,10 +34,6 @@
             mopidyService.on('track_playback_ended', function (evt) {
             }, reaper);
 
-        }
-
-        function watchForConnection() {
-            mopidyService.onConnect().then(onConnect);
         }
 
         function onConnect() {

@@ -28,7 +28,7 @@
         init();
 
         function init() {
-            watchForConnection();
+            mopidyService.onConnect(onConnect, reaper);
             
             mopidyService.on('volume_changed', function (evt) {
                 vwvm.currentVolume = evt.volume;
@@ -41,7 +41,6 @@
                     volumeChangePromise = mopidyService
                         .rpc('core.mixer.set_volume', [parseInt(vwvm.currentVolume)], reaper)
                         .then(function (msg) {
-                            console.log(msg);
                         }).catch(function (err) {
                             console.log(err);
                         });
@@ -51,10 +50,6 @@
                     setVolumePromise = null;
                 });
             }
-        }
-
-        function watchForConnection() {
-            mopidyService.onConnect().then(onConnect);
         }
 
         function onConnect() {
