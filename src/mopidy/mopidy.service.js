@@ -7,7 +7,9 @@
 
     function mopidyService($log, $q, $rootScope, errorModalService) {
         return new function() {
-            var ws = new WebSocket('ws://dev.theelectriccastle.com:6680/mopidy/ws');
+            var DEFAULT_WS_URL = 'ws://dev.theelectriccastle.com:6680/mopidy/ws';
+
+            var ws = null;
             var service = this;
             var nextId = 1;
             var nextEvtId = 1;
@@ -21,100 +23,14 @@
             service.on = on;
             service.onConnect = onConnect;
             service.onDisconnect = onDisconnect;
+            service.connect = connect;
+            service.disconnect = disconnect;
 
-            ws.onopen = function() {
-                $log.info("Web socket opened to '" + ws.url + "'.");
-                    
-                for(var handler of onConnectHandlers) {
-                    handler[1](ws);
-                }
+            init();
 
-                for(var queuedRpc in sendQueue) {
-                    ws.send(queuedRpc[0]);
-                }
-
-                onConnectHandlers.clear();
-                sendQueue = [];
-            };
-
-            ws.onclose = function(close) {
-                $log.info("Web socket closed.");
-
-                for(var promise of rpcPromises) {
-                    var err = new RpcError(RpcError.CONNECTION_CLOSED, close);
-                    promise[1].reject(err);
-                    if(promise[1].reaper) {
-                        promise[1].reaper.untrack(promise[1].promise);
-                    }
-                }
-
-                for(var handler of onDisconnectHandlers) {
-                    handler[1]();
-                }
-
-                onDisconnectHandlers.clear();
-                rpcPromises.clear();
-                sendQueue = [];
-            };
-
-            ws.onerror = function (err) {
-                errorModalService.showError(
-                        'Connection error trying to communicate with mopidy at "'
-                        + err.currentTarget.url + '": ' + err.reason
-                );
-
-                var error = new RpcError(RpcError.CONNECTION_ERROR, err);
-
-                for(var promise of rpcPromises) {
-                    promise[1].reject(error);
-                    if(promise[1].reaper) {
-                        promise[1].reaper.untrack(promise[1].promise);
-                    }
-                }
-
-                rpcPromises.clear();
-                sendQueue = [];
-            };
-
-            ws.onmessage = function (msg) {
-                var payload = JSON.parse(msg.data);
-                var id = payload.id;
-                if(id != null) {
-                    var promise = rpcPromises.get(id);
-                    if(!promise) {
-                        $log.warn('Packet with id ' + id + ' received without any promise');
-                        return;
-                    } 
-
-                    if(payload.error) {
-                        $log.warn('Client RPC error returned.');
-                        $log.warn(payload);        
-                        var error = payload.error;
-                        var rpcError = new RpcError(RpcError.RPC_ERROR, error);
-
-                        promise.reject(rpcError);
-                    } else {
-                        promise.resolve(payload);
-                    }
-                    if(promise.reaper) {
-                        promise.reaper.untrack(promise.promise);
-                    }
-
-                    rpcPromises.delete(id);
-                } else {
-                    var eventType = payload['event'];
-                    if(eventHandlers.has(eventType)) {
-                        var thisEventHandlers = eventHandlers.get(eventType);
-                        $rootScope.$apply(function () {
-                            for(var item of thisEventHandlers) {
-                                    item[1](payload)
-                            }
-                        });
-                    }
-                    $log.info('Event: ' + eventType);
-                    $log.info(payload);
-                }
-            };
+            function init() {
+                connect(DEFAULT_WS_URL);
+            }
 
             //Perform a remote procedure call to mopidy. Return a promise object
             //that captures mopidy's response.
@@ -239,6 +155,24 @@
                 return eventHandle;
             }
 
+            //Disconnect from mopidy.
+            function disconnect(code, reason) {
+                code = code || 1000;
+                reason = reason || '';
+                ws.close(code, reason);
+            }
+
+            function connect(url) {
+                if(ws && ws.readyState != ws.CLOSED && ws.readyState != ws.CLOSING) {
+                    disconnect(1000, 'connecting to another host');
+                }
+                ws = new WebSocket(url);
+                ws.onclose = wsOnClose;
+                ws.onopen = wsOnOpen;
+                ws.onerror = wsOnError;
+                ws.onmessage = wsOnMessage;
+            }
+
             function nextEventId() {
                 var id = nextEvtId;
                 nextEvtId += 1;
@@ -250,6 +184,99 @@
                     + "to stay registered after a controller is destroyed.");
             }
 
+            function wsOnOpen() {
+                $log.info("Web socket opened to '" + ws.url + "'.");
+                    
+                for(var handler of onConnectHandlers) {
+                    handler[1](ws);
+                }
+
+                for(var queuedRpc in sendQueue) {
+                    ws.send(queuedRpc[0]);
+                }
+
+                onConnectHandlers.clear();
+                sendQueue = [];
+            }
+
+            function wsOnClose(close) {
+                $log.info("Web socket closed.");
+
+                for(var promise of rpcPromises) {
+                    var err = new RpcError(RpcError.CONNECTION_CLOSED, close);
+                    promise[1].reject(err);
+                    if(promise[1].reaper) {
+                        promise[1].reaper.untrack(promise[1].promise);
+                    }
+                }
+
+                for(var handler of onDisconnectHandlers) {
+                    handler[1]();
+                }
+
+                onDisconnectHandlers.clear();
+                rpcPromises.clear();
+                sendQueue = [];
+            }
+
+            function wsOnError(err) {
+                errorModalService.showError(
+                        'Connection error trying to communicate with mopidy at "'
+                        + err.currentTarget.url + '": ' + err.reason
+                );
+
+                var error = new RpcError(RpcError.CONNECTION_ERROR, err);
+
+                for(var promise of rpcPromises) {
+                    promise[1].reject(error);
+                    if(promise[1].reaper) {
+                        promise[1].reaper.untrack(promise[1].promise);
+                    }
+                }
+
+                rpcPromises.clear();
+                sendQueue = [];
+            }
+
+            function wsOnMessage(msg) {
+                var payload = JSON.parse(msg.data);
+                var id = payload.id;
+                if(id != null) {
+                    var promise = rpcPromises.get(id);
+                    if(!promise) {
+                        $log.warn('Packet with id ' + id + ' received without any promise');
+                        return;
+                    } 
+
+                    if(payload.error) {
+                        $log.warn('Client RPC error returned.');
+                        $log.warn(payload);        
+                        var error = payload.error;
+                        var rpcError = new RpcError(RpcError.RPC_ERROR, error);
+
+                        promise.reject(rpcError);
+                    } else {
+                        promise.resolve(payload);
+                    }
+                    if(promise.reaper) {
+                        promise.reaper.untrack(promise.promise);
+                    }
+
+                    rpcPromises.delete(id);
+                } else {
+                    var eventType = payload['event'];
+                    if(eventHandlers.has(eventType)) {
+                        var thisEventHandlers = eventHandlers.get(eventType);
+                        $rootScope.$apply(function () {
+                            for(var item of thisEventHandlers) {
+                                    item[1](payload)
+                            }
+                        });
+                    }
+                    $log.info('Event: ' + eventType);
+                    $log.info(payload);
+                }
+            }
         };
     }
 
