@@ -108,6 +108,8 @@
                 }
             };
 
+            //Perform a remote procedure call to mopidy. Return a promise object
+            //that captures mopidy's response.
             function rpc(method, params, reaper) {
                 var id = nextId;
                 nextId += 1;
@@ -153,6 +155,8 @@
                 return deferred.promise;
             }
 
+            //Register an event handler that is called every time a named event is
+            //sent from mopidy. Returns an EventHandle to control the event handler.
             function on(evt, handler, reaper) {
                 var id = nextEventId();
                 if(!eventHandlers.has(evt)) {
@@ -175,6 +179,8 @@
                 return eventHandle;
             }
 
+            //Register an event handler that is called every time a connection to a new
+            //server is established. Returns an EventHandle to control the event handler.
             function onConnect(handler, reaper) {
                 if(ws.readyState == ws.OPEN) {
                     handler();
@@ -196,6 +202,8 @@
                 return eventHandle;
             }
 
+            //Register an event handler that is called every time a connection to a
+            //server is closed. Returns an EventHandle to control the event handler.
             function onDisconnect(handler, reaper) {
                 if(ws.readyState == ws.CLOSED) {
                     handler();

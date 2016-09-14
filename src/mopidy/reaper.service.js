@@ -11,6 +11,7 @@
 
             service.reaper = reaper;
 
+            //Construct a new reaper in scope.
             function reaper(scope) {
                 return new MopidyEventReaper($log, scope);
             }
