@@ -15,14 +15,20 @@
 
         var pbvm = this;
 
-        pbvm.currentTrack = {};
+        pbvm.currentTrack = null;
 
         var reaper = reaperService.reaper($scope);
 
         init();
 
+        function setToDefaults() {
+            pbvm.currentTrack = {};
+        }
+
         function init() {
             mopidyService.onConnect(onConnect, reaper);
+            mopidyService.onDisconnect(onDisconnect, reaper);
+            setToDefaults();
 
             mopidyService.on('playback_state_changed', function (evt) {
             }, reaper);
@@ -44,6 +50,10 @@
                 }).catch(function (err) {
                     errorModalService.showError('Error getting current track: ' + err);
                 });
+        }
+
+        function onDisconnect() {
+            setToDefaults();
         }
 
     }

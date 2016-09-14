@@ -8,14 +8,20 @@
     function PlaylistController($scope, mopidyService, reaperService, errorModalService) {
         var vm = this;
 
-        vm.tracks = [];
+        vm.tracks = null;
 
         var reaper = reaperService.reaper($scope);
 
         init();
 
+        function setToDefaults() {
+            vm.tracks = [];
+        }
+
         function init() {
             mopidyService.onConnect(onConnect, reaper);
+            mopidyService.onDisconnect(onDisconnect, reaper);
+            setToDefaults();
         }
 
         function onConnect() {
@@ -30,6 +36,10 @@
                     erroModalService.showError("Couldn't load tracklist: " + err.toString());
                 }
             });
+        }
+
+        function onDisconnect() {
+            setToDefaults();
         }
 
     }

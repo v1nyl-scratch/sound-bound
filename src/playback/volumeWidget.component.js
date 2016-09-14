@@ -27,8 +27,14 @@
 
         init();
 
+        function setToDefaults() {
+            vwvm.currentVolume = 0;
+        }
+
         function init() {
             mopidyService.onConnect(onConnect, reaper);
+            mopidyService.onDisconnect(onDisconnect, reaper);
+            setToDefaults();
             
             mopidyService.on('volume_changed', function (evt) {
                 vwvm.currentVolume = evt.volume;
@@ -62,6 +68,10 @@
                             + err.toString());
                     }
                 });
+        }
+
+        function onDisconnect() {
+            setToDefaults();
         }
     }
 })();
