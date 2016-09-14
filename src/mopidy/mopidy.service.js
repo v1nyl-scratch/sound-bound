@@ -37,6 +37,9 @@
                 for(var promise of rpcPromises) {
                     var err = new RpcError(RpcError.CONNECTION_CLOSED, close);
                     promise[1].reject(err);
+                    if(promise[1].reaper) {
+                        promise[1].reaper.untrack(promise[1].promise);
+                    }
                 }
 
                 for(var promise of onDisconnectPromises) {
@@ -57,6 +60,9 @@
 
                 for(var promise of rpcPromises) {
                     promise[1].reject(error);
+                    if(promise[1].reaper) {
+                        promise[1].reaper.untrack(promise[1].promise);
+                    }
                 }
 
                 rpcPromises.clear();
@@ -82,6 +88,9 @@
                     } else {
                         promise.resolve(payload);
                     }
+                    if(promise.reaper) {
+                        promise.reaper.untrack(promise.promise);
+                    }
 
                     rpcPromises.delete(id);
                 } else {
@@ -99,7 +108,7 @@
                 }
             };
 
-            function rpc(method, params) {
+            function rpc(method, params, reaper) {
                 var id = nextId;
                 nextId += 1;
                 params = params || [];
@@ -114,19 +123,29 @@
                 var deferred = $q.defer();
                 rpcPromises.set(id, deferred);
 
+                deferred.promise.abort = function() {
+                    rpcPromises.delete(id);
+                };
+
+                if(reaper) {
+                    deferred.reaper = reaper;
+                    reaper.track(deferred.promise);
+                }
+
                 if(ws.readyState == ws.CONNECTING) {
                     //send_queue.push([id, payload, deferred]);
                 } else if(ws.readyState == ws.OPEN) {
                     ws.send(payload);
                 } else {
                     deferred.reject('Web socket is in a closed state.');
+                    deferred.promise.abort = noop;
                     rpcPromises.delete(id);
                 }
 
                 return deferred.promise;
             }
 
-            function on(evt, handler) {
+            function on(evt, handler, reaper) {
                 var id = nextEventId();
                 if(!eventHandlers.has(evt)) {
                     eventHandlers.set(evt, new Map());
@@ -135,11 +154,20 @@
                 var thisEventHandlers = eventHandlers.get(evt);
                 thisEventHandlers.set(id, handler);
 
-                return new function () {
-                    this.close = function () {
+                var eventObj = {
+                    id: id,
+                    unregister: function() {
                         thisEventHandlers.delete(id);
-                    };
-                };
+                    }
+                }
+
+                if(reaper) {
+                    reaper.track(eventObj);
+                } else {
+                    $log.warn("'on' called without a reaper. This can cause an event "
+                        + "to stay registered after a controller is destroyed.");
+                }
+
             }
 
             function onConnect() {

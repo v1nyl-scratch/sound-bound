@@ -10,10 +10,12 @@
             templateUrl: 'src/playback/volumeWidget.html' 
         });
 
-    function SbVolumeWidgetController($timeout, $scope, mopidyService, errorModalService) {
+    function SbVolumeWidgetController($timeout, $scope, mopidyService, errorModalService,
+            reaperService) {
         'ngInject';
 
         var vwvm = this;
+        var reaper = reaperService.reaper($scope);
 
         vwvm.currentVolume = 0;
 
@@ -21,28 +23,23 @@
         vwvm.onVolumeChange = onVolumeChange;
 
         var volumeChangePromise = null;
-        var handler = null;
         var setVolumePromise = null;
 
         init();
 
-        $scope.$on("$destroy", function () {
-            handler.close();
-        });
-
         function init() {
-            onConnect();
+            watchForConnection();
             
-            var handler = mopidyService.on('volume_changed', function (evt) {
+            mopidyService.on('volume_changed', function (evt) {
                 vwvm.currentVolume = evt.volume;
-            });
+            }, reaper);
         }; 
 
         function onVolumeChange() {
             if(setVolumePromise == null) {
                 setVolumePromise = $timeout(function () {
                     volumeChangePromise = mopidyService
-                        .rpc('core.mixer.set_volume', [parseInt(vwvm.currentVolume)])
+                        .rpc('core.mixer.set_volume', [parseInt(vwvm.currentVolume)], reaper)
                         .then(function (msg) {
                             console.log(msg);
                         }).catch(function (err) {
@@ -61,7 +58,7 @@
         }
 
         function onConnect() {
-            mopidyService.rpc('core.mixer.get_volume')
+            mopidyService.rpc('core.mixer.get_volume', [], reaper)
                 .then(function (msg) {
                     vwvm.currentVolume = msg.result;
                 }).catch(function (err) {

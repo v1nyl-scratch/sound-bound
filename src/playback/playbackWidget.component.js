@@ -10,42 +10,38 @@
             templateUrl: 'src/playback/playbackWidget.html'
         });
 
-    function SbPlaybackWidgetController(errorModalService, mopidyService) {
+    function SbPlaybackWidgetController($scope, errorModalService, mopidyService, reaperService) {
         'ngInject';
 
         var pbvm = this;
-        var evtHandlers = [];
-
-        var connectPromise = null;
 
         pbvm.currentTrack = {};
+
+        var reaper = reaperService.reaper($scope);
 
         init();
 
         function init() {
             watchForConnection(); 
 
-            var handler = mopidyService.on('playback_state_changed', function (evt) {
-            });
-            evtHandlers.push(handler);
+            mopidyService.on('playback_state_changed', function (evt) {
+            }, reaper);
 
-            var handler = mopidyService.on('track_playback_started', function (evt) {
+            mopidyService.on('track_playback_started', function (evt) {
                 pbvm.currentTrack = evt.tl_track;
-            });
-            evtHandlers.push(handler);
+            }, reaper);
 
-            var handler = mopidyService.on('track_playback_ended', function (evt) {
-            });
-            evtHandlers.push(handler);
+            mopidyService.on('track_playback_ended', function (evt) {
+            }, reaper);
 
         }
 
         function watchForConnection() {
-            connectPromise = mopidyService.onConnect().then(onConnect);
+            mopidyService.onConnect().then(onConnect);
         }
 
         function onConnect() {
-            mopidyService.rpc('core.playback.get_current_tl_track')
+            mopidyService.rpc('core.playback.get_current_tl_track', [], reaper)
                 .then(function (msg) {
                     console.log(msg);
                     pbvm.currentTrack = msg.result; 
