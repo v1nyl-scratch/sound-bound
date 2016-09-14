@@ -28,16 +28,8 @@
             </div>
             <div class="center-panel">
             </div>
-            <div id="playlist" ng-controller="PlaylistController as vm">
-                <div class="tracklist">
-                    <table class="tracklist-table">
-                        <tbody>
-                            <tr ng-repeat="track in vm.tracks">
-                                <td>{{::track.name}}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div id="tracklist" class="tracklist-container">
+                <sb-tracklist-widget></sb-tracklist-widget>
             </div>
         </div>
 

@@ -1,12 +1,13 @@
 .tracklist {
-    flex: 0 1 auto;
     overflow: auto;
     border-left: 1px solid;
     height: 100%;
     max-width: 300px;
+    min-width: 200px;
 
     .tracklist-table {
         border-spacing: 0px;
+        width: 100%;
 
         >tbody {
             >tr {
@@ -27,6 +28,9 @@
             }
             >tr:hover {
                 background-color: #CCCCDF;
+            }
+            >tr.playing {
+                background-color: #BBBBFF;
             }
 
         }

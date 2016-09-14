@@ -1,4 +1,4 @@
-@import "playlist/playlist";
+@import "tracklist/tracklist";
 @import "playback/playback";
 @import "modal/modal";
 
@@ -50,3 +50,6 @@ footer {
     background-color: #EEEEF9;
 }
 
+.tracklist-container {
+    flex: 0 1 auto;
+}
