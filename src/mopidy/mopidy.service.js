@@ -155,7 +155,12 @@
                 } else if(ws.readyState == ws.OPEN) {
                     ws.send(payload);
                 } else {
-                    deferred.reject('Web socket is in a closed state.');
+                    var rpcError = new RpcError(RpcError.CONNECTION_WAS_CLOSED, 
+                            'WebSocket is currently closed');
+                    deferred.reject(rpcError);
+                    if(reaper) {
+                        reaper.untrack(deferred.promise);
+                    }
                     deferred.promise.abort = noop;
                     deferred.promise._reap = noop;
                     rpcPromises.delete(id);
@@ -300,6 +305,11 @@
                 obj.toString = function() {
                     return error.message + " (Python error: '" + error.data.message + "')";
                 }
+            } else if(type == obj.CONNECTION_WAS_CLOSED) {
+                //error is just a string
+                obj.toString = function() {
+                    return error;
+                }
             }
         }
 
@@ -316,8 +326,10 @@
     RpcError.CONNECTION_ERROR = 0;
     RpcError.CONNECTION_CLOSED = 1;
     RpcError.RPC_ERROR = 2;
+    RpcError.CONNECTION_WAS_CLOSED = 3;
     RpcError.prototype.CONNECTION_ERROR = RpcError.CONNECTION_ERROR;
     RpcError.prototype.CONNECTION_CLOSED = RpcError.CONNECTION_CLOSED;
     RpcError.prototype.RPC_ERROR = RpcError.RPC_ERROR;
+    RpcError.prototype.CONNECTION_WAS_CLOSED = RpcError.CONNECTION_WAS_CLOSED;
 
 })();
