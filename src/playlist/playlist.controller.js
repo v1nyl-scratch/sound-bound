@@ -10,14 +10,27 @@
 
         vm.tracks = [];
 
-        var q = mopidyService.rpc("core.tracklist.slice", [0, 100]).then(function (msg) {
-            console.log(msg);
-            for(var tl of msg.result) {
-                vm.tracks.push(tl.track);
-            }
-        }).catch(function (err) {
-            console.log('Uh oh!');
-            console.log(err);
-        });
+        init();
+
+        function init() {
+            watchForConnection();
+        }
+
+        function watchForConnection() {
+            mopidyService.onConnect().then(onConnect);
+        }
+
+        function onConnect() {
+            var q = mopidyService.rpc("core.tracklist.slice", [0, 100]).then(function (msg) {
+                console.log(msg);
+                for(var tl of msg.result) {
+                    vm.tracks.push(tl.track);
+                }
+            }).catch(function (err) {
+                console.log('Uh oh!');
+                console.log(err);
+            });
+        }
+
     }
 })();

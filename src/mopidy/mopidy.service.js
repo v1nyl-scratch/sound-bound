@@ -2,77 +2,107 @@
     'use strict';
 
     angular
-        .module('sound_bound.mopidy', [
-            'sound_bound'
-        ])
+        .module('sound_bound.mopidy', [])
         .factory('mopidyService', mopidyService)
 
-    function mopidyService($q, $rootScope, errorModalService) {
-        return new function () {
+    function mopidyService($log, $q, $rootScope, errorModalService) {
+        return new function() {
             var ws = new WebSocket('ws://dev.theelectriccastle.com:6680/mopidy/ws');
-            var that = this;
-            var next_id = 1;
-            var next_evt_id = 1;
-            var eventHandlers = {};
+            var service = this;
+            var nextId = 1;
+            var nextEvtId = 1;
+            var eventHandlers = new Map();
+            var onConnectPromises = new Map();
+            var onDisconnectPromises = new Map();
+            var rpcPromises = new Map();
 
-            that.rpc = rpc;
-            that.on = on;
+            service.rpc = rpc;
+            service.on = on;
+            service.onConnect = onConnect;
+            service.onDisconnect = onDisconnect;
 
-            ws.onopen = function () {
-                console.log("Web socket opened.");
-                for(var msg of send_queue) {
-                    console.log("Sending " + msg.toString() + "...");
-                    ws.send(msg[1]);
+            ws.onopen = function() {
+                $log.info("Web socket opened to '" + ws.url + "'.");
+                    
+                for(var promise of onConnectPromises) {
+                    promise[1].resolve(ws);
                 }
-                send_queue = [];
+
+                onConnectPromises.clear();
+            };
+
+            ws.onclose = function(close) {
+                $log.info("Web socket closed.");
+
+                for(var promise of rpcPromises) {
+                    var err = new RpcError(RpcError.CONNECTION_CLOSED, close);
+                    promise[1].reject(err);
+                }
+
+                for(var promise of onDisconnectPromises) {
+                    promise[1].resolve();
+                }
+
+                onDisconnectPromises.clear();
+                rpcPromises.clear();
             };
 
             ws.onerror = function (err) {
-                errorModalService.showError('Unable to connect to mopidy at "'
-                        + err.currentTarget.url + '": ' + err.reason);
-                for(var promise in promise_store) {
-                    promise_store[id].reject(err);
+                errorModalService.showError(
+                        'Connection error trying to communicate with mopidy at "'
+                        + err.currentTarget.url + '": ' + err.reason
+                );
+
+                var error = new RpcError(RpcError.CONNECTION_ERROR, err);
+
+                for(var promise of rpcPromises) {
+                    promise[1].reject(error);
                 }
-                promise_store = {};
+
+                rpcPromises.clear();
             };
 
             ws.onmessage = function (msg) {
                 var payload = JSON.parse(msg.data);
                 var id = payload.id;
                 if(id != null) {
-                    var promise = promise_store[id];
-                    if(payload.error) {
-                        var error = payload.error;
-                        error.toString = function() {
-                            return error.message;
-                        };
+                    var promise = rpcPromises.get(id);
+                    if(!promise) {
+                        $log.warn('Packet with id ' + id + ' received without any promise');
+                        return;
+                    } 
 
-                        promise.reject(error);
+                    if(payload.error) {
+                        $log.warn('Client RPC error returned.');
+                        $log.warn(payload);        
+                        var error = payload.error;
+                        var rpcError = new RpcError(RpcError.RPC_ERROR, error);
+
+                        promise.reject(rpcError);
                     } else {
                         promise.resolve(payload);
                     }
-                    delete promise_store[id];
+
+                    rpcPromises.delete(id);
                 } else {
                     var eventType = payload['event'];
-                    if(eventHandlers[eventType] != null) {
+                    if(eventHandlers.has(eventType)) {
+                        var thisEventHandlers = eventHandlers.get(eventType);
                         $rootScope.$apply(function () {
-                            for(var idx in eventHandlers[eventType]) {
-                                    eventHandlers[eventType][idx](payload)
+                            for(var item of thisEventHandlers) {
+                                    item[1](payload)
                             }
                         });
                     }
-                    console.log('Event: ' + eventType);
-                    console.log(payload);
+                    $log.info('Event: ' + eventType);
+                    $log.info(payload);
                 }
             };
 
-            var promise_store = {};
-            var send_queue = [];
-
             function rpc(method, params) {
-                var id = next_id;
+                var id = nextId;
+                nextId += 1;
                 params = params || [];
-                next_id += 1;
                 var query = {
                     "jsonrpc": "2.0",
                     "id": id,
@@ -82,37 +112,131 @@
                 var payload = JSON.stringify(query);
 
                 var deferred = $q.defer();
-                promise_store[id] = deferred;
+                rpcPromises.set(id, deferred);
 
                 if(ws.readyState == ws.CONNECTING) {
-                    send_queue.push([id, payload, deferred]);
+                    //send_queue.push([id, payload, deferred]);
                 } else if(ws.readyState == ws.OPEN) {
                     ws.send(payload);
                 } else {
                     deferred.reject('Web socket is in a closed state.');
-                    delete promise_store[id];
+                    rpcPromises.delete(id);
                 }
 
                 return deferred.promise;
             }
 
             function on(evt, handler) {
-                var id = next_evt_id;
-                next_evt_id += 1;
-
-                if(eventHandlers[evt] == null) {
-                    eventHandlers[evt] = {};
+                var id = nextEventId();
+                if(!eventHandlers.has(evt)) {
+                    eventHandlers.set(evt, new Map());
                 }
-                eventHandlers[evt][id] = handler;
+
+                var thisEventHandlers = eventHandlers.get(evt);
+                thisEventHandlers.set(id, handler);
 
                 return new function () {
                     this.close = function () {
-                        var handler = eventHandlers[evt];
-                        delete handler[id];              
+                        thisEventHandlers.delete(id);
                     };
                 };
             }
+
+            function onConnect() {
+                var deferred = $q.defer();
+                deferred.promise.abort = angular.noop;
+
+                if(ws.readyState == ws.OPEN) {
+                    deferred.resolve(ws); 
+                } else if(ws.readyState == ws.CLOSED) {
+                    deferred.reject();
+                } else {
+                    var id = nextEventId();
+                    deferred.promise.abort = function() {
+                        onConnectPromise.delete(id);
+                    }
+
+                    onConnectPromises.set(id, deferred);
+                }
+
+                return deferred.promise;
+            }
+
+            function onDisconnect() {
+                var deferred = $q.defer();
+                deferred.promise.abort = angular.noop;
+
+                if(ws.readyState == ws.CLOSED) {
+                    deferred.resolve();
+                } else {
+                    var id = nextEventId();
+                    deferred.promise.abort = function() {
+                        onDisconnectPromise.delete(id);
+                    }
+
+                    onDisconnectPromise.set(id, deferred);
+                }
+
+                return deferred.promise;
+            }
+
+            function nextEventId() {
+                var id = nextEvtId;
+                nextEvtId += 1;
+                return id;
+            }
         };
     }
+
+    function RpcError(type, error) {
+        var obj = this;
+
+        obj.isInternalError = isInternalError;
+        obj.isClientError = isClientError;
+
+        obj.type = function() {
+            return type;
+        };
+
+        obj.errorObject = function () {
+            return error;
+        };
+
+        init();
+
+        function init() {
+            if(type == obj.CONNECTION_CLOSED) {
+                //error is a CloseEvent.
+                obj.toString = function() {
+                    return error.reason;
+                } 
+            } else if(type == obj.CONNECTION_ERROR) {
+                obj.toString = function() {
+                    return error.reason;
+                }
+            } else if(type == obj.RPC_ERROR) {
+                //error is part of the rpc message payload.
+                obj.toString = function() {
+                    return error.message + " (Python error: '" + error.data.message + "')";
+                }
+            }
+        }
+
+        function isInternalError() {
+            return type != obj.RPC_ERROR;
+        }
+
+        function isClientError() {
+            return type == obj.RPC_ERROR;
+        }
+
+    }
+
+    RpcError.CONNECTION_ERROR = 0;
+    RpcError.CONNECTION_CLOSED = 1;
+    RpcError.RPC_ERROR = 2;
+    RpcError.prototype.CONNECTION_ERROR = RpcError.CONNECTION_ERROR;
+    RpcError.prototype.CONNECTION_CLOSED = RpcError.CONNECTION_CLOSED;
+    RpcError.prototype.RPC_ERROR = RpcError.RPC_ERROR;
 
 })();

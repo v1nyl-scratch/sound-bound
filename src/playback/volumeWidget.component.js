@@ -10,7 +10,7 @@
             templateUrl: 'src/playback/volumeWidget.html' 
         });
 
-    function SbVolumeWidgetController($timeout, $scope, mopidyService) {
+    function SbVolumeWidgetController($timeout, $scope, mopidyService, errorModalService) {
         'ngInject';
 
         var vwvm = this;
@@ -26,13 +26,12 @@
 
         init();
 
+        $scope.$on("$destroy", function () {
+            handler.close();
+        });
+
         function init() {
-            var p = mopidyService.rpc('core.mixer.get_volume')
-                .then(function (msg) {
-                    vwvm.currentVolume = msg.result;
-                }).catch(function (err) {
-                    console.log(err);
-                });
+            onConnect();
             
             var handler = mopidyService.on('volume_changed', function (evt) {
                 vwvm.currentVolume = evt.volume;
@@ -57,9 +56,20 @@
             }
         }
 
-        $scope.$on("$destroy", function () {
-            handler.close();
-        });
-    }
+        function watchForConnection() {
+            mopidyService.onConnect().then(onConnect);
+        }
 
+        function onConnect() {
+            mopidyService.rpc('core.mixer.get_volume')
+                .then(function (msg) {
+                    vwvm.currentVolume = msg.result;
+                }).catch(function (err) {
+                    if(err.isClientError()) {
+                        errorModalService.showError('Unable to retrieve volume: ' 
+                            + err.toString());
+                    }
+                });
+        }
+    }
 })();
