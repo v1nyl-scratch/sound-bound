@@ -28,10 +28,8 @@
             };
 
             ws.onerror = function (err) {
-                console.log("Web socket broke.");
-                console.log(err);
                 errorModalService.showError('Unable to connect to mopidy at "'
-                        + err.currentTarget.url + '".');
+                        + err.currentTarget.url + '": ' + err.reason);
                 for(var promise in promise_store) {
                     promise_store[id].reject(err);
                 }
@@ -44,7 +42,12 @@
                 if(id != null) {
                     var promise = promise_store[id];
                     if(payload.error) {
-                        promise.reject(payload.error, payload);
+                        var error = payload.error;
+                        error.toString = function() {
+                            return error.message;
+                        };
+
+                        promise.reject(error);
                     } else {
                         promise.resolve(payload);
                     }
