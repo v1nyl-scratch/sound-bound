@@ -44,6 +44,10 @@
                 if(id != null) {
                     var promise = promise_store[id];
                     if(payload.error) {
+                        payload.error.toString = function() {
+                            return payload.error.message;
+                        };
+
                         promise.reject(payload.error, payload);
                     } else {
                         promise.resolve(payload);
