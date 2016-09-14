@@ -15,6 +15,7 @@
             var onConnectHandlers = new Map();
             var onDisconnectHandlers = new Map();
             var rpcPromises = new Map();
+            var sendQueue = [];
 
             service.rpc = rpc;
             service.on = on;
@@ -28,7 +29,12 @@
                     handler[1](ws);
                 }
 
+                for(var queuedRpc in sendQueue) {
+                    ws.send(queuedRpc[0]);
+                }
+
                 onConnectHandlers.clear();
+                sendQueue = [];
             };
 
             ws.onclose = function(close) {
@@ -48,6 +54,7 @@
 
                 onDisconnectHandlers.clear();
                 rpcPromises.clear();
+                sendQueue = [];
             };
 
             ws.onerror = function (err) {
@@ -66,6 +73,7 @@
                 }
 
                 rpcPromises.clear();
+                sendQueue = [];
             };
 
             ws.onmessage = function (msg) {
@@ -125,7 +133,6 @@
                 var deferred = $q.defer();
                 rpcPromises.set(id, deferred);
 
-
                 if(reaper) {
                     deferred.reaper = reaper;
                     reaper.track(deferred.promise);
@@ -143,12 +150,14 @@
                 };
 
                 if(ws.readyState == ws.CONNECTING) {
-                    //send_queue.push([id, payload, deferred]);
+                    $log.info('rpc called on a connecting WebSocket. Queued for later');
+                    sendQueue.push([payload, deferred]);
                 } else if(ws.readyState == ws.OPEN) {
                     ws.send(payload);
                 } else {
                     deferred.reject('Web socket is in a closed state.');
                     deferred.promise.abort = noop;
+                    deferred.promise._reap = noop;
                     rpcPromises.delete(id);
                 }
 
