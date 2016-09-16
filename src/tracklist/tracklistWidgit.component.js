@@ -16,10 +16,12 @@
         var vm = this;
         var reaper = reaperService.reaper($scope);
 
+        var tlidToIndex = new Map();
+
         vm.tracks = [];
         vm.currentTrack = null;
+        vm.currentTrackIndex = null;
 
-        var handlers = [];
 
         function setToDefaults() {
             vm.tracks = [];
@@ -36,14 +38,26 @@
             mopidyService.on('tracklist_changed', function(evt) {
                 loadTracklist();
             }, reaper);
+
+            mopidyService.on('track_playback_started', function(evt) {
+                vm.currentTrack = evt.tl_track;
+                updateCurrentTrack();
+            }, reaper);
         }
 
         function loadTracklist() {
             mopidyService.rpc("core.tracklist.get_tl_tracks").then(function (msg) {
-                vm.tracks = [];
+                tlidToIndex.clear();
+                var tracks = [];
+                var i = 0;
                 for(var tl of msg.result) {
-                    vm.tracks.push(tl.track);
+                    tracks.push(tl);
+                    tlidToIndex[tl.tlid] = i; 
+                    i += 1;
                 }
+                vm.tracks = tracks;
+                updateCurrentTrack();
+                console.log($scope);
             }).catch(function (err) {
                 vm.tracks = [];
                 console.log(err);
@@ -53,13 +67,22 @@
         }
 
         function updateCurrentTrack() {
-            if(vm.currentTrack !== null) {
+            if(vm.currentTrack) {
+                vm.currentTrackIndex = tlidToIndex[vm.currentTrack.tlid];
+                console.log(vm.currentTrackIndex);
+            } else {
+                vm.currentTrackIndex = null;
             }
+        }
 
+        function onScroll() {
+            console.log('asg');
         }
 
         function onConnect() {
-            mopidyService.rpc('core.tracklist.index', null, reaper).then(function(msg) {
+            mopidyService.rpc('core.playback.get_current_tl_track', null, reaper)
+            .then(function(msg) {
+                console.log(msg);
                 vm.currentTrack = msg.result;
                 updateCurrentTrack();
             }).catch(function(err) {
