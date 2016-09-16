@@ -1,6 +1,8 @@
 <div class="tracklist">
     <table id="tracklist-table" class="tracklist-table" ng-scroll="vm.onScroll();" 
-        sb-table-row-mapper>
+            sb-table-row-mapper 
+            sb-track-active-row active-row-class="playing" active-row="vm.currentTrackIndex"
+    >
         <tbody>
             <tr ng-repeat="track in vm.tracks track by track.tlid">
                 <td>{{::track.track.name}}</td>

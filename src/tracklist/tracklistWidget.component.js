@@ -57,10 +57,8 @@
                 }
                 vm.tracks = tracks;
                 updateCurrentTrack();
-                console.log($scope);
             }).catch(function (err) {
                 vm.tracks = [];
-                console.log(err);
                 errorModalService.showError('Unable to fetch tracklist: ' 
                         + err);
             });
@@ -75,14 +73,9 @@
             }
         }
 
-        function onScroll() {
-            console.log('asg');
-        }
-
         function onConnect() {
             mopidyService.rpc('core.playback.get_current_tl_track', null, reaper)
             .then(function(msg) {
-                console.log(msg);
                 vm.currentTrack = msg.result;
                 updateCurrentTrack();
             }).catch(function(err) {
@@ -97,6 +90,5 @@
         function onDisconnect() {
             setToDefaults();
         }
-
     }
 })();

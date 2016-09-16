@@ -8,7 +8,9 @@
     function TableRowMapperDirective($log, FragmentedArray, Observable) {
         var directive = {
             restrict: 'A',
-            link: link
+            link: link,
+            controller: TableRowMapperController,
+            controllerAs: 'trvm'
         };
 
         function link(scope, element, attrs) {
@@ -18,9 +20,15 @@
                 return;
             }
             scope.rowMapper = new TableRowMapper(FragmentedArray, Observable, tbody);
+            scope.trvm.rowMapper = scope.rowMapper;
         }
 
         return directive;
+    }
+
+    function TableRowMapperController($scope) {
+        var trvm = this;
+        trvm.rowMapper = $scope.rowMapper;
     }
 
     function TableRowMapper(FragmentedArray, Observable, tbody) {
@@ -35,13 +43,16 @@
 
         var onTableUpdateObservable = new Observable();
 
+        init();
+
         self.rowList = function() {
             return rowList;
         }
 
-        self.onTableUpdate = onTableUpdateObservable.watch;
 
-        init();
+        self.onTableUpdate = onTableUpdateObservable.watch;
+        self.get = rowList.get;
+
 
         function init() {
             observer = new MutationObserver(mutationCallback);
