@@ -106,7 +106,7 @@
             var self = this;
 
             var FRAGMENT_SIZE = 32;
-            var FRAGMENT_RECOMBINE_MAX = 26;
+            var FRAGMENT_MERGE_MAX = 26;
             var fragments = new LinkedList();
 
             self.onItemMove = angular.noop;
@@ -201,9 +201,10 @@
                         if(frag.isEmpty()) {
                             console.log('Reaping empty fragment');
                             fragments.removeNode(frag);
-                        } else if(frag.prev && frag.length() + frag.prev.length() 
-                                <= FRAGMENT_RECOMBINE_MAX) {
-                            combineFragments(frag.prev, frag);
+                        } else if(frag.prev && (frag.length() + frag.prev.length() 
+                                <= FRAGMENT_MERGE_MAX)) {
+                            console.log('Merging fragments');
+                            mergeFragments(frag.prev, frag);
                         }
                         return frag;
                     }
