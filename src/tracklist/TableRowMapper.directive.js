@@ -52,6 +52,7 @@
 
         self.onTableUpdate = onTableUpdateObservable.watch;
         self.get = rowList.get;
+        self.slice = rowList.slice;
 
 
         function init() {

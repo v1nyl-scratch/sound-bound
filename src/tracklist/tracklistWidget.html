@@ -1,10 +1,14 @@
 <div class="tracklist">
     <table id="tracklist-table" class="tracklist-table"
-            sb-table-row-mapper 
-            sb-track-active-row active-row-class="playing" active-row="vm.currentTrackIndex"
+     sb-table-row-mapper 
+     sb-track-active-row active-row-class="playing" active-row="vm.currentTrackIndex"
+     sb-selectable-table
     >
         <tbody>
-            <tr ng-repeat="track in vm.tracks track by track.tlid">
+            <tr ng-repeat="track in vm.tracks track by track.tlid" 
+             ng-click="onClickEvent.emit(track, $index, $event)" 
+             data-tlid="{{::track.tlid}}"
+            >
                 <td>{{::track.track.name}}</td>
             </tr>
         </tbody>

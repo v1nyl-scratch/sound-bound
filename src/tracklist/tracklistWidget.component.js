@@ -11,7 +11,7 @@
         });
 
     function TracklistWidgetController($document, $scope, errorModalService, mopidyService,
-            reaperService) {
+            reaperService, Observable) {
         'ngInject';
         var vm = this;
         var reaper = reaperService.reaper($scope);
@@ -21,7 +21,11 @@
         vm.tracks = [];
         vm.currentTrack = null;
         vm.currentTrackIndex = null;
+        vm.onClick = onClick;
+        vm.selected = new Set();
 
+        $scope.onClickEvent = new Observable();
+        $scope.onClick = $scope.onClickEvent.watch;
 
         function setToDefaults() {
             vm.tracks = [];
@@ -90,5 +94,20 @@
         function onDisconnect() {
             setToDefaults();
         }
+
+        function onClick(track, index) {
+            select(track, index);
+        }
+
+        function select(track, index, unselect) {
+            index = index || tlidToIndex[track.tlid];
+            unselect = unselect || false;
+            if(!unselect) {
+                vm.selected.add(track);
+            } else {
+                vm.selected.delete(track);
+            }
+        }
+
     }
 })();

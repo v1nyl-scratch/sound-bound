@@ -8,6 +8,10 @@
     .tracklist-table {
         border-spacing: 0px;
         width: 100%;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
 
         >tbody {
             >tr {
@@ -29,10 +33,15 @@
             >tr:hover {
                 background-color: #CCCCDF;
             }
+            >tr.selected {
+                background-color: green;
+            }
             >tr.playing {
                 background-color: #BBBBFF;
             }
-
+            >tr.playing:hover {
+                background-color: #AAAAFF;
+            }
         }
     }
 }
