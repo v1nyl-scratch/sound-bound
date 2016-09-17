@@ -27,7 +27,7 @@
 
         self.emit = function(...args) {
             for(var observer of observers) {
-                observer[1].apply(args);
+                observer[1].apply(observer[1], args);
             }
         };
     }
