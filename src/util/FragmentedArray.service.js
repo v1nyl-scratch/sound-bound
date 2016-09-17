@@ -108,6 +108,7 @@
             var FRAGMENT_SIZE = 32;
             var FRAGMENT_MERGE_MAX = 26;
             var fragments = new LinkedList();
+            var length = 0;
 
             self.onItemMove = angular.noop;
 
@@ -118,7 +119,13 @@
             self.toArray = toArray;
             self.getLayout = getLayout;
             self.get = get;
+            self.slice = slice;
             self.updateIndices = updateFragmentIndices;
+
+            self.length = function() {
+                return length;
+            }
+
 
             function newFragment() {
                 return new ArrayFragment(FRAGMENT_SIZE);
@@ -134,6 +141,7 @@
                     fragments.pushBackNode(frag);
                 }
                 frag.push(item);
+                length += 1;
                 return frag;
             }
 
@@ -147,6 +155,7 @@
                     fragments.pushFrontNode(frag);
                 }
                 frag.pushFront(item);
+                length += 1;
                 return frag;
             }
 
@@ -156,6 +165,7 @@
                     var frag = newFragment();
                     fragments.pushBackNode(frag);
                     frag.push(item);
+                    length += 1;
                     return frag;
                 }
                 for(var frag = fragHint; frag != null; frag = frag.next) {
@@ -166,6 +176,7 @@
                                 var newFrag = newFragment();
                                 newFrag.push(item);
                                 fragments.insertNode(newFrag, frag);
+                                length += 1;
                                 return newFrag;
                             }
                             var newFrag = splitFragment(frag);
@@ -173,13 +184,16 @@
                             idx += 1;
                             if(idx > splitPos) {
                                 newFrag.insert(item, idx - splitPos);
+                                length += 1;
                                 return newFrag;
                             } else {
                                 frag.insert(item, idx);
+                                length += 1;
                                 return frag;
                             }
                         } else {
                             frag.insert(item, idx+1);
+                            length += 1;
                             return frag;
                         }
                         break;
@@ -213,12 +227,14 @@
                 for(var frag = fragHint; frag != null; frag = frag.next) {
                     var frag = handleFragment(frag);
                     if(frag) {
+                        length -= 1;
                         return frag;
                     }
                 }
                 for(var frag = fragments.head; frag != fragHint; frag = frag.next) {
                     var frag = handleFragment(frag);
                     if(frag) {
+                        length -= 1;
                         return frag;
                     }
                 }
@@ -234,12 +250,64 @@
                 return undefined;
             }
 
+            function slice(start, end) {
+                start = start || 0;
+                end = end || self.length();
+
+                if(start < 0) {
+                    start = self.length()+start;
+                }
+                if(start >= self.length()) {
+                    return [];
+                }
+                if(end < 0) {
+                    end = self.length()+end;
+                }
+                if(end > self.length()) {
+                    end = self.length();
+                }
+    
+                var out = new Array(end-start);
+
+                var startFrag = getFragmentAt(start);
+                
+                var j = 0;
+                for(var frag = startFrag; frag != null; frag = frag.next) {
+                    var base = frag.startIndex();
+                    var offset = 0;
+                    var stop = frag.length();
+                    if(base < start) {
+                        offset = start - base;
+                    } 
+                    if(base + stop > end) {
+                        stop = end - base;
+                    }
+                    for(var i = offset; i < stop; ++i) {
+                        out[j] = frag.data[i];
+                        j += 1;
+                    }
+                }
+                
+                return out; 
+            }
+
             function updateFragmentIndices() {
                 var cumLen = 0;
                 for(var frag of fragments.nodes) {
                     frag.setStartIndex(cumLen);
                     cumLen += frag.length();
                 }
+            }
+
+            function getFragmentAt(index, startFrag) {
+                startFrag = startFrag || fragments.head;
+
+                for(var frag = startFrag; frag != null; frag = frag.next) {
+                    if(frag.startIndex() + frag.length() > index) {
+                        return frag;
+                    }
+                }
+                return null;
             }
 
             function splitPosition() {
